@@ -198,15 +198,23 @@
       }
     };
 
+    let touchMove = ev => {
+      dragMove(ev.touches[0]);
+    };
+
     let dragEnd = ev => {
       if (dragInfo.isMouse) {
         document.removeEventListener('mousemove', dragMove);
         document.removeEventListener('mouseup', dragEnd);
       } else {
-        document.removeEventListener('touchmove', dragMove);
-        document.removeEventListener('touchend', dragEnd);
+        document.removeEventListener('touchmove', touchMove);
+        document.removeEventListener('touchend', touchEnd);
       }
     };
+
+    let touchEnd = ev => {
+      dragEnd(ev.touches[0]);
+    }
 
     let dragStart = ev => {
       if (ev.target != canvas3D && ev.target != canvas2D)
@@ -215,20 +223,36 @@
       dragInfo.isMouse = ev.type == 'mousedown';
       dragInfo.screenX = ev.screenX;
       dragInfo.screenY = ev.screenY;
-      dragInfo.isResize = (ev.offsetX > dragInfo.target.offsetWidth - 50) &&
-        (ev.offsetY > dragInfo.target.offsetHeight - 50);
+      let offsetX = 0;
+      let offsety = 0;
+      if ("offsetX" in ev) {
+        offsetX = ev.offsetX;
+        offsetY = ev.offsetY;
+      } else {
+        let bcr = ev.target.getBoundingClientRect();
+        offsetX = ev.clientX - bcr.x;
+        offsetY = ev.clientY - bcr.y;
+      }
+      dragInfo.isResize = (offsetX > dragInfo.target.offsetWidth - 100) &&
+        (offsetY > dragInfo.target.offsetHeight - 100);
+      // console.log("offsetX = " + offsetX + " dragInfo.target.offsetWidth = " + dragInfo.target.offsetWidth + " offsetY = " + offsetY + " dragInfo.target.offsetHeight = " + dragInfo.target.offsetHeight);
       if (dragInfo.isResize)
         console.log('isResize');
       if (dragInfo.isMouse) {
         document.addEventListener('mousemove', dragMove);
         document.addEventListener('mouseup', dragEnd);
       } else {
-        document.addEventListener('touchmove', dragMove);
-        document.addEventListener('touchend', dragEnd);
+        document.addEventListener('touchmove', touchMove);
+        document.addEventListener('touchend', touchEnd);
       }
-    }
+    };
+
+    let touchStart = ev => {
+      dragStart(ev.touches[0]);
+    };
 
     document.addEventListener('mousedown', dragStart);
+    document.addEventListener('touchstart', touchStart);
   }
   observeSizes();
   initMouseHandling();
