@@ -25,6 +25,7 @@
     height: 33%;
   }
 </style>
+<div id="output"></div>
 <canvas id="canvas3D" width="100" height="100"></canvas>
 <canvas id="canvas2D" width="100" height="100"></canvas>
 
@@ -80,8 +81,8 @@
   function updateCanvasSize3D(snappedSize) {
     if (!snappedSize)
       return console.error("No snapped size");
-    canvas3D.width = snappedSize.inlineSize || snappedSize.width;
-    canvas3D.height = snappedSize.blockSize || snappedSize.height;
+    canvas3D.width = snappedSize.inlineSize;
+    canvas3D.height = snappedSize.blockSize;
     paint3D();
   }
   window.updateCanvasSize3D = updateCanvasSize3D;
@@ -126,8 +127,8 @@
   function updateCanvasSize2D(snappedSize) {
     if (!snappedSize)
       return console.error("No snapped size");
-    canvas2D.width = snappedSize.inlineSize || snappedSize.width;
-    canvas2D.height = snappedSize.blockSize || snappedSize.height;
+    canvas2D.width = snappedSize.inlineSize;
+    canvas2D.height = snappedSize.blockSize;
     paint2D();
   }
   window.updateCanvasSize2D = updateCanvasSize2D;
@@ -158,20 +159,34 @@
     document.querySelector('#canvas3DHeight').innerText = (canvas3D.height + " (" + canvas3D.height / clientRect.height + ")").substring(0,13);
   }
 
+  function output(str) {
+    document.querySelector('#output').innerText = str;
+  }
+
   function observeSizes() {
     let ro = new ResizeObserver( entries => {
       for (entry of entries) {
+        if (!entry['devicePixelContentBoxSize']) {
+          output('ResizeObserver does not support device-pixel-content-box in this browser');
+          return;
+        }
         if (entry.target == canvas3D) {
-          updateCanvasSize3D(entry.devicePixelRect || entry.contentRect);
+          updateCanvasSize3D(entry.devicePixelContentBoxSize[0]);
         }
         if (entry.target == canvas2D) {
-          updateCanvasSize2D(entry.devicePixelRect || entry.contentRect);
+          updateCanvasSize2D(entry.devicePixelContentBoxSize[0]);
         }
       }
       updateLegend();
     });
-    ro.observe(canvas2D, { size: ["border-box", "pixel-snapped-box"]});
-    ro.observe(canvas3D);
+    try {
+      ro.observe(canvas2D, { box: ["device-pixel-content-box"]});
+      ro.observe(canvas3D, { box: ["device-pixel-content-box"]});
+      return true;
+    } catch (e) {
+      output('ResizeObserver does not support device-pixel-content-box in this browser');
+      return false;
+    }
   }
 
   function initMouseHandling() {
@@ -254,7 +269,8 @@
     document.addEventListener('mousedown', dragStart);
     document.addEventListener('touchstart', touchStart);
   }
-  observeSizes();
-  initMouseHandling();
+  if (observeSizes()) {
+    initMouseHandling();
+  }
 })();
 </script>
