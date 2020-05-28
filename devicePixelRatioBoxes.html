@@ -93,8 +93,8 @@
   let canvas2D = document.querySelector("#canvas2D");
   let ctx = canvas2D.getContext("2d");
   function paint2D() {
-    let step = Math.round(window.devicePixelRatio * 2);
-    let halfstep = step / 2;
+    let step = 4;
+    let halfstep = 2;
     let w = canvas2D.width;
     let h = canvas2D.height;
     ctx.beginPath();
