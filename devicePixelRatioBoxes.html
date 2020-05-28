@@ -38,22 +38,19 @@
   gl.shaderSource(vertexShader, `
   #version 100
   attribute vec4 position;
-  varying vec2 pos;
   void main() {
-    pos = (position.xy + vec2(1,1)) * 0.5;
     gl_Position = position;
   }
   `.trim());
   gl.compileShader(vertexShader);
   if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(vertexShader));
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+  // Derived from example at https://github.com/KhronosGroup/WebGL/issues/2460
   gl.shaderSource(fragmentShader, `
   #version 100
-  precision highp float;
-  varying vec2 pos;
-  uniform ivec2 canvasSize;
+  precision mediump float;
   void main() {
-    ivec2 xy = ivec2(mod(vec2(ivec2(vec2(canvasSize) * pos)), vec2(2, 2)));
+    vec2 xy = mod(gl_FragCoord.xy, vec2(2, 2));
     gl_FragColor = vec4(xy, 0, 1);
   }
   `.trim());
@@ -62,6 +59,7 @@
   let program = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
+  gl.bindAttribLocation(program, "position", 0);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(program));
   gl.useProgram(program);
@@ -73,7 +71,6 @@
   gl.enableVertexAttribArray(0);
 
   function paint3D() {
-    gl.uniform2i(gl.getUniformLocation(program, "canvasSize"), canvas3D.width, canvas3D.height);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
